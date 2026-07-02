@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
+import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useDispatch, useSelector } from 'react-redux';
 import HomePage from './components/HomePage';
 import AuthPage from './components/AuthPage';
 import { auth } from './firebaseConfig';
+import type { CartItem } from './redux/cartSlice';
 import { clearCart, hydrateCart } from './redux/cartSlice';
+import type { AppDispatch, RootState } from './redux/store';
 import './App.css';
 
 function App() {
-  const dispatch = useDispatch();
-  const cartItems = useSelector((state) => state.cart.items);
-  const [currentUser, setCurrentUser] = useState(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +36,7 @@ function App() {
 
     if (savedCart) {
       try {
-        const parsedCart = JSON.parse(savedCart);
+        const parsedCart = JSON.parse(savedCart) as CartItem[];
         dispatch(hydrateCart(parsedCart));
       } catch {
         sessionStorage.removeItem(cartKey);

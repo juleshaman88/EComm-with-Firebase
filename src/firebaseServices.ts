@@ -21,6 +21,21 @@ import {
 } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
 
+const FAKESTORE_BASE_URL = 'https://fakestoreapi.com';
+
+interface FakeStoreProduct {
+  id: number;
+  title: string;
+  price: number;
+  category: string;
+  description: string;
+  image: string;
+  rating?: {
+    rate: number;
+    count: number;
+  };
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -40,6 +55,10 @@ export interface ProductInput {
 export interface ProductRecord extends ProductInput {
   id: string;
   createdBy: string;
+  rating?: {
+    rate: number;
+    count: number;
+  };
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -166,6 +185,38 @@ export async function fetchProductsFromFirestore(): Promise<ProductRecord[]> {
       };
     })
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+}
+
+export async function fetchProductsFromFakeStore(): Promise<ProductRecord[]> {
+  const response = await fetch(`${FAKESTORE_BASE_URL}/products`);
+
+  if (!response.ok) {
+    throw new Error('Unable to fetch products from FakeStore API.');
+  }
+
+  const products = (await response.json()) as FakeStoreProduct[];
+
+  return products.map((item) => ({
+    id: `fakestore-${item.id}`,
+    title: item.title,
+    price: Number(item.price),
+    category: item.category,
+    description: item.description,
+    image: item.image,
+    rating: item.rating,
+    createdBy: 'fakestoreapi',
+  }));
+}
+
+export async function fetchCategoriesFromFakeStore(): Promise<string[]> {
+  const response = await fetch(`${FAKESTORE_BASE_URL}/products/categories`);
+
+  if (!response.ok) {
+    throw new Error('Unable to fetch categories from FakeStore API.');
+  }
+
+  const categories = (await response.json()) as string[];
+  return categories;
 }
 
 export async function createProductInFirestore(
